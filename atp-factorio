@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# factorio-atp launcher — run stock Factorio under the Frida map-download bridge.
+#
+#   ./atp-factorio setup                     # one-time: venv + scaffolding
+#   ./atp-factorio server <save.zip> [opts]  # host: serve the map over atp
+#   ./atp-factorio client <host:port> [opts] # join: fetch the map over atp
+#
+# No patched binary: this spawns your own Factorio under Frida hooks. See README
+# for the legal framing (personal interop PoC, owned copy, pinned to v2.1.11).
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+die() { echo "error: $*" >&2; exit 1; }
+
+resolve_py() {
+  for v in "$HERE/.venv" "$HERE/work/frida-venv"; do
+    [[ -x "$v/bin/python" ]] && { echo "$v/bin/python"; return; }
+  done
+  die "no venv found — run: ./atp-factorio setup"
+}
+
+resolve_atp() {
+  [[ -n "${ATP_BIN:-}" && -x "${ATP_BIN:-}" ]] && { echo "$ATP_BIN"; return; }
+  if command -v atp-experiment >/dev/null 2>&1; then command -v atp-experiment; return; fi
+  for c in "$HERE/bin/atp-experiment" \
+           "$HERE/../atp-experiment/target/release/atp-experiment"; do
+    [[ -x "$c" ]] && { echo "$c"; return; }
+  done
+  die "atp-experiment binary not found. Install it, e.g.:
+    cargo install --git https://github.com/pwfff/atp-experiment
+  (or build it and set ATP_BIN=/path/to/atp-experiment)"
+}
+
+maybe_run() {   # honor ATP_DRYRUN=1 to print instead of exec
+  if [[ "${ATP_DRYRUN:-}" == "1" ]]; then
+    echo "[dry-run] ATP_BIN=$ATP_BIN"
+    echo "[dry-run] would exec: $*"
+    exit 0
+  fi
+  exec "$@"
+}
+
+cmd="${1:-help}"; shift || true
+case "$cmd" in
+  setup)
+    exec "$HERE/tools/setup.sh" "$@" ;;
+
+  server)
+    [[ $# -ge 1 ]] || die "usage: atp-factorio server <save.zip> [--port N] [--bind ADDR] [--rz-port P]"
+    save="$1"; shift
+    [[ -f "$save" ]] || die "save not found: $save"
+    port=34197; bind=0.0.0.0; rz=9440
+    while [[ $# -gt 0 ]]; do case "$1" in
+      --port) port="$2"; shift 2;;
+      --bind) bind="$2"; shift 2;;
+      --rz-port) rz="$2"; shift 2;;
+      *) die "unknown server option: $1";;
+    esac; done
+    PY="$(resolve_py)"; ATP_BIN="$(resolve_atp)"
+    export ATP_MODE=1 ATP_BIN SAVE="$(realpath "$save")" \
+           SERVER_PORT="$port" SERVER_BIND="$bind" ATP_RZ_PORT="$rz"
+    echo "[atp-factorio] hosting $SAVE on $bind:$port (atp rendezvous :$rz)"
+    maybe_run "$PY" "$HERE/tools/live/server-drive.py" ;;
+
+  client)
+    [[ $# -ge 1 ]] || die "usage: atp-factorio client <host:port> [--name X] [--rz-port P] [--timeout S] [--autoclose] [--isolate]"
+    addr="$1"; shift
+    name=""; rz=9440; timeout=600; keepalive=1; isolate=0
+    while [[ $# -gt 0 ]]; do case "$1" in
+      --name) name="$2"; shift 2;;
+      --rz-port) rz="$2"; shift 2;;
+      --timeout) timeout="$2"; shift 2;;
+      --autoclose) keepalive=0; shift;;   # test mode: quit after join
+      --isolate) isolate=1; shift;;       # loopback dev: own datadir/config
+      *) die "unknown client option: $1";;
+    esac; done
+    PY="$(resolve_py)"; ATP_BIN="$(resolve_atp)"
+    export ATP_MODE=1 HOOK_JS=splice.js ATP_BIN ATP_RZ_PORT="$rz" \
+           ATP_USER="$name" ATP_KEEPALIVE="$keepalive" ATP_ISOLATE="$isolate"
+    echo "[atp-factorio] joining $addr over atp (rendezvous :$rz)"
+    maybe_run "$PY" "$HERE/tools/live/drive.py" "$addr" "$timeout" ;;
+
+  help|-h|--help)
+    sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *)
+    die "unknown command: $cmd (try: setup | server | client | help)" ;;
+esac

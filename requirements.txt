@@ -1,0 +1,3 @@
+# Python deps for the live Frida harness (tools/live/*.py).
+# Frida 17 API is assumed (Module.getGlobalExportByName, etc.).
+frida>=17,<18

@@ -1,0 +1,14 @@
+target/
+.venv/
+.claude/
+*.log
+recon/*.txt
+work/
+recon/disas/
+server-level.zip
+server-level/
+_autosave*.zip
+
+# python bytecode
+__pycache__/
+*.pyc

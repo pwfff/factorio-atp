@@ -74,7 +74,7 @@ case "$cmd" in
       *) die "unknown client option: $1";;
     esac; done
     PY="$(resolve_py)"; ATP_BIN="$(resolve_atp)"
-    export ATP_MODE=1 HOOK_JS=splice.js ATP_BIN ATP_RZ_PORT="$rz" \
+    export ATP_MODE=1 ATP_BIN ATP_RZ_PORT="$rz" \
            ATP_KEEPALIVE="$keepalive" ATP_ISOLATE="$isolate"
     echo "[atp-factorio] joining $addr over atp (rendezvous :$rz)"
     maybe_run "$PY" "$HERE/tools/live/drive.py" "$addr" "$timeout" ;;

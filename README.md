@@ -142,7 +142,6 @@ tools/live/            Frida harness:
   drive.py               client: spawn client under Frida + stream
   splice.js              hook: pull map over atp, splice, steer stock to aux
   atp_rendezvous.py      per-transfer port handoff (multi-client, opt-in)
-  confirm.js             read-only seam/invariant verifier (default hook)
 tools/disas.sh         scoped objdump helper (recon)
 PLAN.md                the reverse-engineering record
 AGENTS.md              contributor notes / hard rules

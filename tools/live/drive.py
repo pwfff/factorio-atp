@@ -3,7 +3,7 @@
 # (splice.js for the atp map bridge), and stream hook output. In dev/test it
 # exits when the join completes/fails; with ATP_KEEPALIVE=1 it leaves the client
 # running so you can actually play. Usage: drive.py [server_addr] [timeout_s].
-# Overridable via env: FACTORIO_BIN, FACTORIO_MODS, ATP_BIN, HOOK_JS,
+# Overridable via env: FACTORIO_BIN, FACTORIO_MODS, ATP_BIN,
 # ATP_MODE/ATP_RZ_PORT, ATP_KEEPALIVE.
 import frida, sys, time, os, threading, re, json, shutil
 
@@ -152,10 +152,8 @@ pid = dev.spawn(argv, env=env, cwd=CWD, stdio="pipe")   # pipe -> on_output scan
 dev.on("output", on_output)
 print(f"[drive] pid={pid}, attaching", flush=True)
 session = dev.attach(pid)
-# route console.log from the script to us; HOOK_JS picks which hook to load
-HOOK = os.environ.get("HOOK_JS", os.path.join(HERE, "confirm.js"))
-if not os.path.isabs(HOOK):
-    HOOK = os.path.join(HERE, HOOK)
+# route console.log from the script to us
+HOOK = os.path.join(HERE, "splice.js")
 print(f"[drive] hook script: {HOOK}", flush=True)
 src = open(HOOK).read()
 # wrap console.log to send() so it comes through on_message, and inject the

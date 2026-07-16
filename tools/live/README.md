@@ -16,19 +16,15 @@ pieces for hacking on them.
 - **`server-observe.js`** — hooks `openat`/`open`, classifies by access mode,
   and emits `EVENT:snapshot-ready path=…` on the O_RDONLY serve-open of a
   fully-written `mp-save-N.zip` (the per-join snapshot).
-- **`drive.py`** — spawns the client under Frida, streams hook + game output,
-  and (`ATP_KEEPALIVE=1`) leaves it running to play, or exits on join/failure.
-  Loads `HOOK_JS` (default `confirm.js`; the bridge uses `splice.js`).
+- **`drive.py`** — spawns the client under Frida, loads `splice.js`, streams
+  hook + game output, and (`ATP_KEEPALIVE=1`) leaves it running to play, or
+  exits on join/failure.
 - **`splice.js`** — on the first block request, waits for the atp-received map
   (`ATP_SNAP_PATH_FILE`, injected by `drive.py`), writes it through the game's
   own `BufferedFileWriteStream::write`, sets `received`/`nextSeq`, so the stock
   path fetches only the 90-byte aux. Refuses to splice a stale snapshot.
 - **`atp_rendezvous.py`** — the tiny out-of-band rendezvous protocol (opt-in,
   multi-client, per-transfer ports). See its module docstring.
-- **`confirm.js`** — read-only hook that captures the `TransferTarget`, polls
-  download progress, and prints the completion invariant
-  (`received == base + total`). `drive.py`'s default hook; not part of the
-  bridge, but the quickest way to verify the seam on a stock download.
 
 ## Env knobs
 

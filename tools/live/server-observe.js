@@ -15,12 +15,6 @@
 //
 // This same "ready + path" signal is the server-bridge trigger: the server
 // atp-sends the snapshot instead of / alongside the stock serve.
-const B = Process.getModuleByName('factorio').base;
-console.log('[+] factorio(server) base ' + B);
-
-const OFF_processMessage = 0x2d4e870;   // TransferSource::processMessage
-const OFF_sendDataLoop   = 0x2d4e370;   // TransferSource::sendDataLoop
-
 const gx = (n) => Module.getGlobalExportByName(n);
 const O_ACCMODE = 3, O_RDONLY = 0, O_CREAT = 0x40;
 const isSnapshot = (p) => p && /mp-save-\d+\.zip/.test(p);
@@ -59,17 +53,4 @@ try {
   });
 } catch (e) {}
 
-let firstMsg = true;
-Interceptor.attach(B.add(OFF_processMessage), {
-  onEnter(a) {
-    if (!firstMsg) return;
-    firstMsg = false;
-    console.log('[+] TransferSource::processMessage first call: this=' + a[0] +
-      ' (server started serving blocks)');
-  }
-});
-Interceptor.attach(B.add(OFF_sendDataLoop), {
-  onEnter() { console.log('[+] TransferSource::sendDataLoop entered (serve thread live)'); }
-});
-
-console.log('[+] armed (server-observe): snapshot detector (openat/open classify) + TransferSource hooks');
+console.log('[+] armed (server-observe): snapshot detector (openat/open classify)');

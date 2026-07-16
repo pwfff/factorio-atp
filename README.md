@@ -100,9 +100,6 @@ otherwise uses its **own** Factorio config, mods, and save directory untouched
 ./atp-factorio client SERVER_ADDR:34197
 ```
 
-(`--name X` is accepted but currently only tags your request in the rendezvous
-log; it does not set your in-game name and has no effect on the transfer.)
-
 The client and server each need their own owned Factorio, the matching mods for
 the save, and the `atp-experiment` binary. The rendezvous port (default 9440
 TCP, plus ephemeral per-transfer UDP) must be reachable **on the server**.

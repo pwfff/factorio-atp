@@ -63,11 +63,10 @@ case "$cmd" in
     maybe_run "$PY" "$HERE/tools/live/server-drive.py" ;;
 
   client)
-    [[ $# -ge 1 ]] || die "usage: atp-factorio client <host:port> [--name X] [--rz-port P] [--timeout S] [--autoclose] [--isolate]"
+    [[ $# -ge 1 ]] || die "usage: atp-factorio client <host:port> [--rz-port P] [--timeout S] [--autoclose] [--isolate]"
     addr="$1"; shift
-    name=""; rz=9440; timeout=600; keepalive=1; isolate=0
+    rz=9440; timeout=600; keepalive=1; isolate=0
     while [[ $# -gt 0 ]]; do case "$1" in
-      --name) name="$2"; shift 2;;
       --rz-port) rz="$2"; shift 2;;
       --timeout) timeout="$2"; shift 2;;
       --autoclose) keepalive=0; shift;;   # test mode: quit after join
@@ -76,7 +75,7 @@ case "$cmd" in
     esac; done
     PY="$(resolve_py)"; ATP_BIN="$(resolve_atp)"
     export ATP_MODE=1 HOOK_JS=splice.js ATP_BIN ATP_RZ_PORT="$rz" \
-           ATP_USER="$name" ATP_KEEPALIVE="$keepalive" ATP_ISOLATE="$isolate"
+           ATP_KEEPALIVE="$keepalive" ATP_ISOLATE="$isolate"
     echo "[atp-factorio] joining $addr over atp (rendezvous :$rz)"
     maybe_run "$PY" "$HERE/tools/live/drive.py" "$addr" "$timeout" ;;
 

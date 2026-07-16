@@ -43,7 +43,6 @@ Read by the drivers (the launcher sets most of these):
 | `SAVE` `SERVER_PORT` `SERVER_BIND` | server | save to host, listen addr |
 | `ATP_KEEPALIVE=1` | client | stay in-game after join (real play) |
 | `ATP_ISOLATE=1` | client | loopback dev: own datadir/config/steam_appid |
-| `ATP_USER` | client | username carried to the rendezvous (future correlation) |
 | `HOLD_S` | client | seconds to stay in-game after join before closing |
 | `SERVER_SETTINGS` | server | path to a `--server-settings` JSON (e.g. `auto_pause`) |
 | `ATP_DRYRUN=1` | launcher | print the resolved command instead of running it |

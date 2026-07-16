@@ -9,15 +9,15 @@ Why this exists (multi-client + opt-in):
   block-by-block transfer untouched -> fully opt-in and backward compatible.
 
 Protocol (one CRLF-free ASCII line each way):
-    client -> server:  "ATP-JOIN <username>\n"
+    client -> server:  "ATP-JOIN\n"
     server -> client:  "PORT <tcp_port>\n"   # a send is listening there for you
                   or:  "NONE\n"              # no snapshot ready for you yet; retry
 
 Correlation is currently FIFO: each connection claims the oldest ready-but-
-unclaimed snapshot. The <username> field is carried for a future IP/username
-correlation step (needed to disambiguate *simultaneous* joins from distinct
-clients) but is not yet used to pick the snapshot -- see PLAN.md. FIFO is
-correct for loopback and for joins that don't overlap in time.
+unclaimed snapshot. FIFO is correct for loopback and for joins that don't
+overlap in time; disambiguating *simultaneous* joins from distinct clients
+would key off the peer identity the Factorio server already has (peer IP /
+player name), not anything the client supplies here -- see PLAN.md.
 """
 import socket
 import threading
@@ -49,7 +49,7 @@ def _readline(conn) -> str:
 def serve(port, handler, stop_event):
     """Accept rendezvous connections until stop_event is set.
 
-    handler(username: str, peer_ip: str) -> str
+    handler(peer_ip: str) -> str
       returns the reply line WITHOUT trailing newline, e.g. "PORT 40001" or
       "NONE". Called on a worker thread (one per connection).
     """
@@ -75,12 +75,8 @@ def serve(port, handler, stop_event):
 def _handle(conn, addr, handler):
     try:
         conn.settimeout(5)
-        line = _readline(conn)
-        username = ""
-        if line.startswith("ATP-JOIN"):
-            parts = line.split(None, 1)
-            username = parts[1].strip() if len(parts) > 1 else ""
-        reply = handler(username, addr[0])
+        _readline(conn)                      # expect "ATP-JOIN"; content unused
+        reply = handler(addr[0])
         conn.sendall((reply + "\n").encode("ascii"))
     except OSError:
         pass
@@ -91,7 +87,7 @@ def _handle(conn, addr, handler):
             pass
 
 
-def request(host, port, username, timeout=5):
+def request(host, port, timeout=5):
     """Ask the server for a transfer port. Returns int port, or None if the
     server has no snapshot for us yet (reply "NONE"). Raises OSError if the
     rendezvous port itself is unreachable (caller should retry)."""
@@ -99,7 +95,7 @@ def request(host, port, username, timeout=5):
     conn.settimeout(timeout)
     try:
         conn.connect((host, port))
-        conn.sendall(("ATP-JOIN " + (username or "") + "\n").encode("ascii"))
+        conn.sendall(b"ATP-JOIN\n")
         line = _readline(conn)
     finally:
         conn.close()

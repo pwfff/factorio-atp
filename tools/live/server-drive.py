@@ -50,7 +50,7 @@ def _reap_async(proc, label):
         print(f"[server-drive] {label} exited rc={rc}", flush=True)
     threading.Thread(target=_r, daemon=True).start()
 
-def rz_handler(username, peer_ip):
+def rz_handler(peer_ip):
     # An atp-capable client asked for its map. Claim the oldest ready snapshot
     # (FIFO), bind a per-transfer port, spawn `atp send --listen` on it, and
     # tell the client which port to dial. No snapshot yet -> NONE (client retries).
@@ -61,8 +61,8 @@ def rz_handler(username, peer_ip):
     cp, up = rz.free_port(), rz.free_port()
     cmd = [ATP_BIN, "send", path, "--listen", f"0.0.0.0:{cp}",
            "--udp-port", str(up), "--nocrypto"]
-    print(f"[server-drive] rendezvous: client {peer_ip} (user={username!r}) "
-          f"-> port {cp}, send {path}", flush=True)
+    print(f"[server-drive] rendezvous: client {peer_ip} -> port {cp}, "
+          f"send {path}", flush=True)
     log = open(os.path.join(REPO, "work", f"atp-send-{cp}.log"), "w")
     _reap_async(subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT),
                 f"ATP send :{cp}")

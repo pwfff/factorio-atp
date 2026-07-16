@@ -4,7 +4,7 @@
 # exits when the join completes/fails; with ATP_KEEPALIVE=1 it leaves the client
 # running so you can actually play. Usage: drive.py [server_addr] [timeout_s].
 # Overridable via env: FACTORIO_BIN, FACTORIO_MODS, ATP_BIN, HOOK_JS,
-# ATP_MODE/ATP_RZ_PORT/ATP_USER, ATP_KEEPALIVE.
+# ATP_MODE/ATP_RZ_PORT, ATP_KEEPALIVE.
 import frida, sys, time, os, threading, re, json, shutil
 
 BIN = os.environ.get("FACTORIO_BIN", os.path.expanduser(
@@ -98,7 +98,6 @@ ATP_BIN = (os.environ.get("ATP_BIN") or shutil.which("atp-experiment")
     or os.path.expanduser("~/src/atp-experiment/target/release/atp-experiment"))
 _srv_host = ADDR.rsplit(":", 1)[0]                            # server host
 ATP_RZ_PORT = int(os.environ.get("ATP_RZ_PORT", str(rz.DEFAULT_PORT)))
-ATP_USER = os.environ.get("ATP_USER", "")                     # carried for future correlation
 RECV_BUDGET = int(os.environ.get("RECV_BUDGET", "180"))       # pull rendezvous+recv budget (s)
 ATP_OUT = os.path.join(REPO, "work", "atp-map.zip")   # harness scratch (recv target)
 
@@ -124,7 +123,7 @@ def start_atp_recv():
         while time.time() < deadline and not gone.is_set() and not loaded.is_set():
             attempt += 1
             try:
-                port = rz.request(_srv_host, ATP_RZ_PORT, ATP_USER, timeout=5)
+                port = rz.request(_srv_host, ATP_RZ_PORT, timeout=5)
             except OSError:
                 port = None   # rendezvous not up yet
             if port:

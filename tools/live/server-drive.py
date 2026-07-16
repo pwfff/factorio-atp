@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-# Spawn the HEADLESS server under Frida (no desktop impact) and load a hook.
-# ptrace_scope=1 blocks attaching to an already-running server, so we must
-# spawn it as a Frida child. Default hook: server-observe.js (per-join snapshot
-# detector). On EVENT:snapshot-ready path=<p> we record <p> to
-# work/current-snapshot.path so the client-side splice sources THIS join's bytes.
+# Spawn the HEADLESS server under Frida (no desktop impact) and load
+# server-observe.js (the per-join snapshot detector). ptrace_scope=1 blocks
+# attaching to an already-running server, so we must spawn it as a Frida child.
+# On EVENT:snapshot-ready path=<p> we record <p> to work/current-snapshot.path
+# so the client-side splice sources THIS join's bytes.
 #
-# Usage: server-drive.py [hook.js]   (runs until Ctrl-C / SIGTERM)
+# Usage: server-drive.py   (runs until Ctrl-C / SIGTERM)
 #
 # ATP mode: set ATP_MODE=1 to make the server bridge atp-SEND each per-join
 # snapshot to the joining client instead of writing current-snapshot.path.
@@ -24,9 +24,7 @@ FACT = os.environ.get("FACTORIO_BIN", os.path.expanduser(
     "~/.local/share/Steam/steamapps/common/Factorio/bin/x64/factorio"))
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
-HOOK = sys.argv[1] if len(sys.argv) > 1 else "server-observe.js"
-if not os.path.isabs(HOOK):
-    HOOK = os.path.join(HERE, HOOK)
+HOOK = os.path.join(HERE, "server-observe.js")
 SNAP_PATH_FILE = os.path.join(REPO, "work", "current-snapshot.path")
 # Save to host: SAVE env, else the repo's server-level.zip (dev default).
 LEVEL = os.environ.get("SAVE", os.path.join(REPO, "server-level.zip"))
